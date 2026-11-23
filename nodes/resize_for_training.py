@@ -19,7 +19,10 @@ def plan_bucket(width, height, base_resolution, step, max_side, allow_upscale):
         width *= shrink
         height *= shrink
 
-    return max(step, round(width / step) * step), max(step, round(height / step) * step)
+    if allow_upscale:
+        return max(step, round(width / step) * step), max(step, round(height / step) * step)
+    # Rounding up would grow the source again, so floor to stay at or below its own size.
+    return max(step, int(width // step) * step), max(step, int(height // step) * step)
 
 
 def resample(image, width, height):
@@ -75,6 +78,13 @@ class ResizeImagesForTraining(io.ComfyNode):
 
     @classmethod
     def execute(cls, images, base_resolution, bucket_step, max_side, fit, allow_upscale) -> io.NodeOutput:
+        # is_input_list wraps every input in a list, including widget values.
+        base_resolution = base_resolution[0]
+        bucket_step = bucket_step[0]
+        max_side = max_side[0]
+        fit = fit[0]
+        allow_upscale = allow_upscale[0]
+
         resized = []
         sizes = []
         for image in images:

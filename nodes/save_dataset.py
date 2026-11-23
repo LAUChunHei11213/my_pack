@@ -46,7 +46,8 @@ class SaveImagesWithCaptions(io.ComfyNode):
 
     @classmethod
     def execute(cls, folder, images, captions=None, filenames=None) -> io.NodeOutput:
-        folder = folder.strip()
+        # is_input_list wraps every input in a list, including widget values.
+        folder = folder[0].strip()
         if not folder:
             raise ValueError("folder is empty: set the destination folder for the exported dataset.")
         folder = os.path.abspath(os.path.expanduser(folder))
