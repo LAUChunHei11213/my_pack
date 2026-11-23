@@ -10,6 +10,7 @@ ComfyUI custom nodes for building a LoRA training data pipeline in the graph its
 | **Load Images From Folder** | `my_pack/io` | Reads every image in a folder, pairs each one with its `.txt` caption, returns lists. |
 | **Resize Images For Training** | `my_pack/preprocess` | Scales each image to a training bucket around `base_resolution`, keeping the aspect ratio. |
 | **Save Images With Captions** | `my_pack/preprocess` | Writes PNG + `.txt` per image into a folder, ready for a kohya-style trainer. |
+| **Anima LoRA Trainer** | `my_pack/training` | Writes an sd-scripts config for an Anima LoRA and can start training in the background. |
 
 ## Install
 
@@ -80,12 +81,40 @@ Writes `<name>.png` plus `<name>.txt` when the caption is not empty, reuses the 
 `_3` on collisions, and falls back to `00001` style names when no `filenames` are connected. Outputs `paths` and
 `count`.
 
+## Anima LoRA Trainer
+
+Builds the two config files an Anima `sd-scripts` run needs and, if `start` is on, launches it detached so the
+ComfyUI queue is not blocked.
+
+- `dataset_dir` — a folder of images, or a parent folder of `{repeats}_{name}` subfolders. Every subset is written
+  with its repeat count parsed from the folder name.
+- `dit` / `vae` / `text_encoder` — picked from ComfyUI's own `diffusion_models`, `vae` and `text_encoders` folders.
+  Restart ComfyUI after adding new model files so the dropdowns see them.
+- `network_dim` / `network_alpha` — the LoRA rank. `dim 16 / alpha 16` on Anima is ~44 MB over 280 modules.
+- `start = false` (default) only writes `<output_dir>/configs/train.toml` and `dataset.toml` and reports the planned
+  step count. Set it to `true` to start training; the log goes to `<output_dir>/train_<timestamp>.log`.
+- `sd_scripts_dir` — leave empty to auto-detect a `*/backend/sd-scripts/anima_train_network.py` under `custom_nodes`.
+
+The trainer writes `lora_unet_*` keys. Convert the result to the ComfyUI layout before loading it in a graph:
+
+```bash
+python networks/convert_anima_lora_to_comfy.py <trained>.safetensors <output>.safetensors
+```
+
 ## 中文
 
 ComfyUI 自定义节点包，把 LoRA 训练的数据准备流程直接搭在工作流里。
 
 **链路**：`Load Images From Folder` → `Resize Images For Training` → `Save Images With Captions`，最后把
 `train_data_dir` 指向保存节点输出的文件夹。
+
+**Anima LoRA Trainer** 负责收尾：`dataset_dir` 填图片文件夹（或 `{重复次数}_名字` 的子目录父级），
+`dit`/`vae`/`text_encoder` 从 ComfyUI 的模型目录里选，`network_dim`/`network_alpha` 就是 LoRA 的 rank。
+`start` 默认关闭——只写出 `configs/train.toml` 和 `configs/dataset.toml` 并告诉你计划步数；打开才会在后台
+真正开跑，日志落在 `train_<时间戳>.log`，不占用 ComfyUI 队列。
+
+训练产出的 key 是 `lora_unet_*`，要先用 `networks/convert_anima_lora_to_comfy.py` 转成 `diffusion_model.*`
+才能在 ComfyUI 里用 `LoraLoaderModelOnly` 加载。
 
 **Anima base v1.0 的推荐值**：`base_resolution=1024`、`bucket_step=64`、`max_side=2048`、`fit=snap`；
 加载节点把 `max_side` 设成 2048，解码时就把大图降下来；训练器里 `resolution=1024,1024`、开 `enable_bucket`、
