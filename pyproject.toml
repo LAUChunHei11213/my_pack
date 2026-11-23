@@ -1,0 +1,15 @@
+[project]
+name = "my_pack"
+version = "0.1.0"
+description = "ComfyUI nodes for building a LoRA training data pipeline."
+license = { file = "LICENSE" }
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = []
+
+[project.urls]
+Repository = "https://github.com/LAUChunHei11213/my_pack"
+
+[tool.comfy]
+PublisherId = "lauchunhei11213"
+DisplayName = "my_pack"
