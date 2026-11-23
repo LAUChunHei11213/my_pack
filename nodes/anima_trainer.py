@@ -8,7 +8,8 @@ from comfy_api.latest import io
 
 TRAINER_SCRIPT = "anima_train_network.py"
 IMAGE_EXTENSIONS = (".png", ".jpg", ".jpeg", ".webp", ".bmp")
-CUSTOM_NODES_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+PACK_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+CUSTOM_NODES_DIR = os.path.dirname(PACK_DIR)
 
 
 def find_trainer_dir(hint: str) -> str:
